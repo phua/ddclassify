@@ -43,13 +43,13 @@ Search filename (Title - Author.ext).
 
 .B ddclassify -d \*(lq/path/to/Alice's Adventures in Wonderland - Lewis Carroll.epub\*(rq
 
-Search directory recursively and exclude search directories.
-
-.B ddclassify -d /path/to/library -r -e music,movies
-
 Specify regular expression pattern for parsing title and author from filenames.
 
 .B ddclassify -d \&... -p \*(lq^(?P<title>.+?)(,.*Edition)? - (?P<author>.+)\.([A-Za-z]+)$\*(rq
+
+Search directory recursively and exclude search directories.
+
+.B ddclassify -d /path/to/library -r -e music,movies
 
 Create DDC directory structure
 .I /tmp/eBooks

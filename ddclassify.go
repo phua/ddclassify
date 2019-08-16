@@ -220,7 +220,7 @@ func classify(classify Classify, ddc DDC, depth int) string {
     } else if division := class.Divisions[(i / 10) % 10]; depth == 2 {
         return filepath.Join(class.Description, division.Description)
     } else {
-        section := division.Sections[(i / 100) % 10]
+        section := division.Sections[i % 10]
         return filepath.Join(class.Description, division.Description, section.Description)
     }
     return "Unassigned"

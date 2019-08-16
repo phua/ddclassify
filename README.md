@@ -32,13 +32,13 @@ Search filename (Title - Author.ext):
 
     $ go run ddclassify.go -d "/path/to/Alice's Adventures in Wonderland - Lewis Carroll.epub"
 
-Search directory recursively and exclude search directories:
-
-    $ go run ddclassify.go -d /path/to/library -r -e music,movies
-
 Specify regular expression pattern for parsing title and author from filenames.
 
     $ go run ddclassify.go -d ... -p "^(?P<title>.+?)(,.*Edition)? - (?P<author>.+)\.([A-Za-z]+)$"
+
+Search directory recursively and exclude search directories:
+
+    $ go run ddclassify.go -d /path/to/library -r -e music,movies
 
 Create DDC directory structure /tmp/eBooks without transferring files:
 
