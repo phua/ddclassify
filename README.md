@@ -51,6 +51,13 @@ Create DDC directory structure /tmp/eBooks and copy, link, symlink, or move file
     $ go run ddclassify.go -d /path/to/library -r -c /tmp/eBooks -m 4
     $ go run ddclassify.go -d /path/to/library -r -c /tmp/eBooks -m 8
 
+Create DDC directory structure /tmp/eBooks, transfer and rename files:
+
+    $ go run ddclassify.go -d /path/to/library -r -c /tmp/eBooks -m 17 # 1 + 16
+    $ go run ddclassify.go -d /path/to/library -r -c /tmp/eBooks -m 18 # 2 + 16
+    $ go run ddclassify.go -d /path/to/library -r -c /tmp/eBooks -m 20 # 4 + 16
+    $ go run ddclassify.go -d /path/to/library -r -c /tmp/eBooks -m 24 # 8 + 16
+
 Specify DDC structure XML file mapping Dewey Decimal numbers to descriptions:
 
     $ go run ddclassify.go ... -x /path/to/ddc.xml

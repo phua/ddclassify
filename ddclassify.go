@@ -19,6 +19,14 @@ import (
 
 var verbose bool
 
+var (
+    nsfaRegexp = regexp.MustCompile(`\d+(?:\.\d*)?`)
+    titleRegexp = regexp.MustCompile(`(?P<title>[^:]+)(?: : )(?P<subtitle>.*)?`)
+    titleTemplate = `${title}_ ${subtitle}`
+    authorRegexp = regexp.MustCompile(`(?P<surname>[^,|]+), (?P<prename>[^(,\[|]+ ?[^ (,\[|]+?)`)
+    authorTemplate = `${prename} ${surname}`
+)
+
 type DDC struct {
     XMLName xml.Name `xml:"ddc"`
     Classes []*Class `xml:"class"`
@@ -58,7 +66,9 @@ type Classify struct {
     Input Input `xml:"input"`
     Works []Work `xml:"works>work"`
     Work Work `xml:"work"`
-    MostPopular MostPopular `xml:"recommendations>ddc>mostPopular"`
+    Authors []Author `xml:"authors>author"`
+    MostPopulars []MostPopular `xml:"recommendations>ddc>mostPopular"`
+    MostPopular MostPopular
 }
 
 type Response struct {
@@ -78,6 +88,10 @@ type Work struct {
     Wi string `xml:"wi,attr"`
 }
 
+type Author struct {
+    Value string `xml:",chardata"`
+}
+
 type MostPopular struct {
     Nsfa string `xml:"nsfa,attr"`
     Sfa string `xml:"sfa,attr"`
@@ -92,6 +106,11 @@ func parseClassify(body []byte) Classify {
     case "0":                   // Single-work summary
         fallthrough
     case "2":                   // Single-work detail
+        for _, mostPopular := range classify.MostPopulars {
+            if nsfaRegexp.MatchString(mostPopular.Nsfa) {
+                classify.MostPopular = mostPopular
+            }
+        }
         return classify
     case "4":                   // Multi-work
         for _, work := range classify.Works {
@@ -212,7 +231,6 @@ func sendRequestGoogle(title string, author string) Classify {
 
 func classify(classify Classify, ddc DDC, depth int) string {
     if classify.MostPopular.Nsfa == "" {
-        // return "Unassigned"
     } else if i, err := strconv.Atoi(classify.MostPopular.Nsfa[:3]); err != nil {
         log.Println(err)
     } else if class := ddc.Classes[i / 100]; depth == 1 {
@@ -226,19 +244,48 @@ func classify(classify Classify, ddc DDC, depth int) string {
     return "Unassigned"
 }
 
-func classifyString(c Classify, ddc DDC, depth int) string {
-    return fmt.Sprintf("%s : %s/%s - %s",
-        c.MostPopular.Nsfa, classify(c, ddc, depth), c.Work.Title, c.Work.Author)
+func capture(s string, re *regexp.Regexp, t string) string {
+    if re.MatchString(s) {
+        b := []byte {}
+        for _, m := range re.FindAllStringSubmatchIndex(s, -1) {
+            b = re.ExpandString(b, t, s, m)
+        }
+        return string(b)
+    }
+    return s
 }
 
-// func classifyFilename(c Classify, ddc DDC, depth int, ext string) string {
-//     title, author := c.Work.Title, c.Work.Author
-//     title = strings.ReplaceAll(title, " : ", "_ ")
-//     re := regexp.MustCompile("(\\s*\\[.*Author.*\\]\\s*)")
-//     author = re.ReplaceAllLiteralString(author, "")
-//     author = strings.ReplaceAll(author, " | ", ", ")
-//     return fmt.Sprintf("%s - %s%s", title, author, ext)
-// }
+func titleString(title string) string {
+    return strings.Title(capture(title, titleRegexp, titleTemplate))
+}
+
+func authorsString(authors []Author) string {
+    b, n := strings.Builder {}, len(authors) - 1
+    for i, author := range authors {
+        b.WriteString(capture(author.Value, authorRegexp, authorTemplate))
+        if i < n {
+            b.WriteString(", ")
+        }
+    }
+    return b.String()
+}
+
+func classifyString(c Classify, ddc DDC, depth int) string {
+    return fmt.Sprintf("%s : %s/%s - %s", c.MostPopular.Nsfa, classify(c, ddc, depth),
+        titleString(c.Work.Title), authorsString(c.Authors))
+}
+
+func classifyFilename(c Classify, ext string) string {
+    return fmt.Sprintf("%s - %s%s", titleString(c.Work.Title), authorsString(c.Authors), ext)
+}
+
+func parseFilenameRegexp(name string, re *regexp.Regexp) (title string, author string) {
+    if re.MatchString(name) {
+        split := strings.Split(capture(name, re, "${title}|${author}"), "|")
+        title, author = split[0], split[1]
+    }
+    return
+}
 
 func scan(path string, recurse bool, excludes []string,
     parseFilename func(string) (string, string),
@@ -252,7 +299,7 @@ func scan(path string, recurse bool, excludes []string,
             if fileInfo.IsDir() {
                 if recurse {
                     for _, exclude := range excludes {
-                        if strings.Contains(_path, exclude) {
+                        if exclude != "" && strings.Contains(_path, exclude) {
                             return filepath.SkipDir
                         }
                     }
@@ -270,17 +317,13 @@ func scan(path string, recurse bool, excludes []string,
         })
 }
 
-func parseFilenameRegexp(name string, re *regexp.Regexp) (title string, author string) {
-    if re.MatchString(name) {
-        match, template := []byte {}, "$title|$author"
-        for _, submatch := range re.FindAllStringSubmatchIndex(name, -1) {
-            match = re.ExpandString(match, template, name, submatch)
-        }
-        split := strings.Split(string(match), "|")
-        title, author = split[0], split[1]
-    }
-    return
-}
+const (
+    COPY = 1
+    LINK = 2
+    SLNK = 4
+    MOVE = 8
+    RNME = 16
+)
 
 func copyFile(from string, to string) error {
     src, err := os.Open(from)
@@ -306,17 +349,17 @@ func linkFile(src string, dst string, mode int) (err error) {
     if err = os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
         return
     }
-    switch mode {
-    case 1:
+    switch mode & 0xF {
+    case COPY:
         log.Println("cp", src, dst)
         return copyFile(src, dst)
-    case 2:
+    case LINK:
         log.Println("ln", src, dst)
         return os.Link(src, dst)
-    case 4:
+    case SLNK:
         log.Println("ln -s", src, dst)
         return os.Symlink(src, dst)
-    case 8:
+    case MOVE:
         log.Println("mv", src, dst)
         return os.Rename(src, dst)
     default:
@@ -361,8 +404,9 @@ func main() {
             fmt.Println(classifyString(sendRequestOCLC_ISBN(*isbn), ddc, *depth))
         case "d":
             excludes := strings.Split(*exclude, ",")
+            filenameRegexp := regexp.MustCompile(*pattern)
             parseFilename := func(name string) (string, string) {
-                return parseFilenameRegexp(name, regexp.MustCompile(*pattern))
+                return parseFilenameRegexp(name, filenameRegexp)
             }
             processResponse := func(path string, c Classify) {
                 fmt.Println(classifyString(c, ddc, *depth))
@@ -370,9 +414,9 @@ func main() {
             if *create != "" {
                 processResponse = func(path string, c Classify) {
                     name := filepath.Base(path)
-                    // if *rename && c.MostPopular.Nsfa != "" {
-                    //     name = classifyFilename(c, ddc, *depth, filepath.Ext(path))
-                    // }
+                    if *mode & RNME == RNME && c.MostPopular.Nsfa != "" {
+                        name = classifyFilename(c, filepath.Ext(path))
+                    }
                     err := linkFile(path, filepath.Join(*create, classify(c, ddc, *depth), name), *mode)
                     if err != nil {
                         log.Println(err)

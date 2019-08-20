@@ -69,6 +69,22 @@ and copy, link, symlink, or move files.
 
 .B ddclassify -d /path/to/library -r -c /tmp/eBooks -m 8
 
+Create DDC directory structure
+.I /tmp/eBooks
+transfer and rename files.
+
+.B ddclassify -d /path/to/library -r -c /tmp/eBooks -m 17
+.I # 1 + 16
+
+.B ddclassify -d /path/to/library -r -c /tmp/eBooks -m 18
+.I # 2 + 16
+
+.B ddclassify -d /path/to/library -r -c /tmp/eBooks -m 20
+.I # 4 + 16
+
+.B ddclassify -d /path/to/library -r -c /tmp/eBooks -m 24
+.I # 8 + 16
+
 Specify DDC structure XML file mapping Dewey Decimal numbers to descriptions.
 
 .B ddclassify \&... -x /path/to/ddc.xml
