@@ -13,9 +13,15 @@ ddclassify \- Dewey Decimal Classifier
 
 .B ddclassify
 .I [-h|--help]
+
+.B ddclassify
 .I [-t title [-a author]]
 .I [-i isbn]
-.I [-d path [-p pattern] [-r] [-e directories] [-c /path/to/library [-m 1|2|4|8]]]
+
+.B ddclassify
+.I [-d path [-p pattern] [-r] [-e directories] [-c /path/to/library [-m 1|2|4|8]] [-misfile]]
+
+.B ddclassify
 .I [-x /path/to/ddc.xml]
 .I [-depth 1..3]
 .I [-g]
@@ -84,6 +90,10 @@ transfer and rename files.
 
 .B ddclassify -d /path/to/library -r -c /tmp/eBooks -m 24
 .I # 8 + 16
+
+Find misfiled entries in search directory.
+
+.B $ ddclassify -d /path/to/library -r -misfile
 
 Specify DDC structure XML file mapping Dewey Decimal numbers to descriptions.
 

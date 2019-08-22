@@ -25,6 +25,8 @@ var (
     titleTemplate = `${title}_ ${subtitle}`
     authorRegexp = regexp.MustCompile(`(?P<surname>[^,|]+), (?P<prename>[^(,\[|]+ ?[^ (,\[|]+?)`)
     authorTemplate = `${prename} ${surname}`
+    authorSeparator = ", "
+    titleAuthorSeparator = " - "
 )
 
 type DDC struct {
@@ -114,8 +116,8 @@ func parseClassify(body []byte) Classify {
         return classify
     case "4":                   // Multi-work
         for _, work := range classify.Works {
-            if strings.Contains(work.Schemes, "DDC") && classify.Input.Type != "owi" {
-                if c := sendRequestOCLC_OWI(work.Owi); c.MostPopular.Nsfa != "" {
+            if strings.Contains(work.Schemes, "DDC") && classify.Input.Type != "wi" {
+                if c := sendRequestOCLC_WI(work.Wi); c.MostPopular.Nsfa != "" {
                     return c
                 }
             }
@@ -201,6 +203,11 @@ func sendRequestOCLC_OWI(owi string) Classify {
     return sendRequestOCLC(fmt.Sprintf(request, owi))
 }
 
+func sendRequestOCLC_WI(wi string) Classify {
+    request := "http://classify.oclc.org/classify2/Classify?wi=%s&summary=true"
+    return sendRequestOCLC(fmt.Sprintf(request, wi))
+}
+
 func sendRequestOCLC_ISBN(isbn string) Classify {
     request := "http://classify.oclc.org/classify2/Classify?isbn=%s&summary=true"
     return sendRequestOCLC(fmt.Sprintf(request, isbn))
@@ -259,24 +266,28 @@ func titleString(title string) string {
     return strings.Title(capture(title, titleRegexp, titleTemplate))
 }
 
-func authorsString(authors []Author) string {
-    b, n := strings.Builder {}, len(authors) - 1
-    for i, author := range authors {
-        b.WriteString(capture(author.Value, authorRegexp, authorTemplate))
-        if i < n {
-            b.WriteString(", ")
+func authorString(c Classify) string {
+    if n := len(c.Authors); n == 0 {
+        return capture(c.Work.Author, authorRegexp, authorTemplate)
+    } else {
+        b := strings.Builder {}
+        for i, author := range c.Authors {
+            b.WriteString(capture(author.Value, authorRegexp, authorTemplate))
+            if i < n - 1 {
+                b.WriteString(authorSeparator)
+            }
         }
+        return b.String()
     }
-    return b.String()
 }
 
 func classifyString(c Classify, ddc DDC, depth int) string {
-    return fmt.Sprintf("%s : %s/%s - %s", c.MostPopular.Nsfa, classify(c, ddc, depth),
-        titleString(c.Work.Title), authorsString(c.Authors))
+    return fmt.Sprintf("%s : %s/%s%s%s", c.MostPopular.Nsfa, classify(c, ddc, depth),
+        titleString(c.Work.Title), titleAuthorSeparator, authorString(c))
 }
 
 func classifyFilename(c Classify, ext string) string {
-    return fmt.Sprintf("%s - %s%s", titleString(c.Work.Title), authorsString(c.Authors), ext)
+    return fmt.Sprint(titleString(c.Work.Title), titleAuthorSeparator, authorString(c), ext)
 }
 
 func parseFilenameRegexp(name string, re *regexp.Regexp) (title string, author string) {
@@ -373,18 +384,19 @@ func main() {
     author := flag.String("a", "", "Search by author and title.")
     isbn := flag.String("i", "", "Search by ISBN.")
     directory := flag.String("d", ".", "Search directory.")
-    pattern := flag.String("p", `^(?P<title>.+?)(,.*Edition)? - (?P<author>.+)\.([A-Za-z]+)$`, "Regular expression pattern for filenames.")
+    pattern := flag.String("p", `^(?P<title>.+?)(?:(_|,).*)? - (?P<author>.+)\.([A-Za-z]+)$`, "Regular expression pattern for filenames.")
     recurse := flag.Bool("r", false, "Search directory recursively.")
     exclude := flag.String("e", "", "Exclude search directories.")
     create := flag.String("c", "", "Create DDC directory structure and transfer files.")
     mode := flag.Int("m", 0, "File transfer mode: copy(1), link(2), symlink(4), move(8).")
+    misfile := flag.Bool("misfile", false, "Find misfiled entries in search directory.")
     xml := flag.String("x", "ddc.xml", "DDC definition XML file.")
     depth := flag.Int("depth", 3, "Classification depth: class(1), division(2), section(3).")
     google := flag.Bool("g", false, "Use the Google Books API to lookup the ISBN.")
     flag.BoolVar(&verbose, "v", false, "Verbose. Log HTTP responses.")
     flag.Parse()
     if flag.NFlag() < 1 {
-        fmt.Println("Usage:\n\t$", os.Args[0], "[-t title [-a author]] [-i isbn] [-d path [-p pattern] [-r] [-e directories] [-c /path/to/library [-m 1|2|4|8]]] [-x /path/to/ddc.xml] [-depth 1..3] [-g] [-v]")
+        fmt.Println("Usage:\n\t$", os.Args[0], "[-t title [-a author]] [-i isbn] [-d path [-p pattern] [-r] [-e directories] [-c /path/to/library [-m 1|2|4|8]] [-misfile]] [-x /path/to/ddc.xml] [-depth 1..3] [-g] [-v]")
         return
     }
     ddc, err := parseDDC(*xml)
@@ -420,6 +432,12 @@ func main() {
                     err := linkFile(path, filepath.Join(*create, classify(c, ddc, *depth), name), *mode)
                     if err != nil {
                         log.Println(err)
+                    }
+                }
+            } else if *misfile {
+                processResponse = func(path string, c Classify) {
+                    if s := classify(c, ddc, *depth); !strings.Contains(path, s) {
+                        fmt.Println("Misfiled entry:", path, s)
                     }
                 }
             }

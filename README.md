@@ -8,7 +8,7 @@ Usage:
     go run ddclassify.go [-h|--help]
                          [-t title [-a author]]
                          [-i isbn]
-                         [-d path [-p pattern] [-r] [-e directories] [-c /path/to/library [-m 1|2|4|8]]]
+                         [-d path [-p pattern] [-r] [-e directories] [-c /path/to/library [-m 1|2|4|8]] [-misfile]]
                          [-x /path/to/ddc.xml]
                          [-depth 1..3]
                          [-g]
@@ -57,6 +57,10 @@ Create DDC directory structure /tmp/eBooks, transfer and rename files:
     $ go run ddclassify.go -d /path/to/library -r -c /tmp/eBooks -m 18 # 2 + 16
     $ go run ddclassify.go -d /path/to/library -r -c /tmp/eBooks -m 20 # 4 + 16
     $ go run ddclassify.go -d /path/to/library -r -c /tmp/eBooks -m 24 # 8 + 16
+
+Find misfiled entries in search directory:
+
+    $ go run ddclassify.go -d /path/to/library -r -misfile
 
 Specify DDC structure XML file mapping Dewey Decimal numbers to descriptions:
 

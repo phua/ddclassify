@@ -361,6 +361,7 @@
       <section number="295" description="Zoroastrianism"></section>
       <section number="296" description="Judaism"></section>
       <section number="297" description="Islam, Bábism &amp; Bahá&#39;í Faith"></section>
+      <section number="298" description="Optional"></section>
       <section number="299" description="Religions not provided for elsewhere"></section>
     </division>
   </class>
@@ -959,6 +960,7 @@
       <section number="786" description="Keyboard &amp; other instruments"></section>
       <section number="787" description="Stringed instruments"></section>
       <section number="788" description="Wind instruments"></section>
+      <section number="789" description="Optional"></section>
     </division>
     <division number="790" description="Sports, games &amp; entertainment">
       <section number="790" description="Recreational &amp; performing arts"></section>
@@ -996,6 +998,7 @@
       <section number="816" description="American letters in English"></section>
       <section number="817" description="American humor &amp; satire in English"></section>
       <section number="818" description="American miscellaneous writings"></section>
+      <section number="819" description="Optional"></section>
     </division>
     <division number="820" description="English &amp; Old English literatures">
       <section number="820" description="English &amp; Old English literatures"></section>
@@ -1121,6 +1124,14 @@
     </division>
     <division number="920" description="Biography &amp; genealogy">
       <section number="920" description="Biography, genealogy &amp; insignia"></section>
+      <section number="921" description="Optional"></section>
+      <section number="922" description="Optional"></section>
+      <section number="923" description="Optional"></section>
+      <section number="924" description="Optional"></section>
+      <section number="925" description="Optional"></section>
+      <section number="926" description="Optional"></section>
+      <section number="927" description="Optional"></section>
+      <section number="928" description="Optional"></section>
       <section number="929" description="Genealogy, names &amp; insignia"></section>
     </division>
     <division number="930" description="History of ancient world (to ca. 499)">
