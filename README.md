@@ -32,26 +32,30 @@ Search filename (Title - Author.ext):
 
     $ go run ddclassify.go -d "/path/to/Alice's Adventures in Wonderland - Lewis Carroll.epub"
 
+Search filename (Title - Author.ext) and move to library:
+
+    $ go run ddclassify.go -d "/path/to/Alice's Adventures in Wonderland - Lewis Carroll.epub" -c /path/to/library -m 8
+
 Specify regular expression pattern for parsing title and author from filenames.
 
-    $ go run ddclassify.go -d ... -p "^(?P<title>.+?)(,.*Edition)? - (?P<author>.+)\.([A-Za-z]+)$"
+    $ go run ddclassify.go -d ... -p "^(?P<title>.+?)(?:(_|,).*)? - (?P<author>.+)\.([A-Za-z]+)$"
 
 Search directory recursively and exclude search directories:
 
     $ go run ddclassify.go -d /path/to/library -r -e music,movies
 
-Create DDC directory structure /tmp/eBooks without transferring files:
+Create empty DDC directory structure /tmp/eBooks without transferring files:
 
     $ go run ddclassify.go -d /path/to/library -r -c /tmp/eBooks
 
-Create DDC directory structure /tmp/eBooks and copy, link, symlink, or move files:
+Create DDC directory structure /tmp/eBooks and transfer files:
 
     $ go run ddclassify.go -d /path/to/library -r -c /tmp/eBooks -m 1
     $ go run ddclassify.go -d /path/to/library -r -c /tmp/eBooks -m 2
     $ go run ddclassify.go -d /path/to/library -r -c /tmp/eBooks -m 4
     $ go run ddclassify.go -d /path/to/library -r -c /tmp/eBooks -m 8
 
-Create DDC directory structure /tmp/eBooks, transfer and rename files:
+Create DDC directory structure /tmp/eBooks transfer and rename files:
 
     $ go run ddclassify.go -d /path/to/library -r -c /tmp/eBooks -m 17 # 1 + 16
     $ go run ddclassify.go -d /path/to/library -r -c /tmp/eBooks -m 18 # 2 + 16

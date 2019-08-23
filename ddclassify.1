@@ -49,15 +49,19 @@ Search filename (Title - Author.ext).
 
 .B ddclassify -d \*(lq/path/to/Alice's Adventures in Wonderland - Lewis Carroll.epub\*(rq
 
+Search filename (Title - Author.ext) and move to library.
+
+.B ddclassify -d \*(lq/path/to/Alice's Adventures in Wonderland - Lewis Carroll.epub\*(rq -c /path/to/library -m 8
+
 Specify regular expression pattern for parsing title and author from filenames.
 
-.B ddclassify -d \&... -p \*(lq^(?P<title>.+?)(,.*Edition)? - (?P<author>.+)\.([A-Za-z]+)$\*(rq
+.B ddclassify -d \&... -p \*(lq^(?P<title>.+?)(?:(_|,).*)? - (?P<author>.+)\.([A-Za-z]+)$\*(rq
 
 Search directory recursively and exclude search directories.
 
 .B ddclassify -d /path/to/library -r -e music,movies
 
-Create DDC directory structure
+Create empty DDC directory structure
 .I /tmp/eBooks
 without transferring files.
 
@@ -65,35 +69,39 @@ without transferring files.
 
 Create DDC directory structure
 .I /tmp/eBooks
-and copy, link, symlink, or move files.
+and transfer files.
 
 .B ddclassify -d /path/to/library -r -c /tmp/eBooks -m 1
+.I # copy
 
 .B ddclassify -d /path/to/library -r -c /tmp/eBooks -m 2
+.I # link
 
 .B ddclassify -d /path/to/library -r -c /tmp/eBooks -m 4
+.I # symlink
 
 .B ddclassify -d /path/to/library -r -c /tmp/eBooks -m 8
+.I # move
 
 Create DDC directory structure
 .I /tmp/eBooks
 transfer and rename files.
 
 .B ddclassify -d /path/to/library -r -c /tmp/eBooks -m 17
-.I # 1 + 16
+.I # 1 + 16, copy and rename
 
 .B ddclassify -d /path/to/library -r -c /tmp/eBooks -m 18
-.I # 2 + 16
+.I # 2 + 16, link and rename
 
 .B ddclassify -d /path/to/library -r -c /tmp/eBooks -m 20
-.I # 4 + 16
+.I # 4 + 16, symlink and rename
 
 .B ddclassify -d /path/to/library -r -c /tmp/eBooks -m 24
-.I # 8 + 16
+.I # 8 + 16, move and rename
 
 Find misfiled entries in search directory.
 
-.B $ ddclassify -d /path/to/library -r -misfile
+.B ddclassify -d /path/to/library -r -misfile
 
 Specify DDC structure XML file mapping Dewey Decimal numbers to descriptions.
 
