@@ -8,7 +8,7 @@ Usage:
     go run ddclassify.go [-h|--help]
                          [-t title [-a author]]
                          [-i isbn]
-                         [-d path [-p pattern] [-r] [-e directories] [-c /path/to/library [-m 1|2|4|8]] [-misfile]]
+                         [-d path [-p pattern] [-r] [-e directories] [-c /path/to/library [-m 1|2|4|8|17|18|20|24]] [-misfile]]
                          [-x /path/to/ddc.xml]
                          [-depth 1..3]
                          [-g]

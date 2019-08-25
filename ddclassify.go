@@ -290,44 +290,6 @@ func classifyFilename(c Classify, ext string) string {
     return fmt.Sprint(titleString(c.Work.Title), titleAuthorSeparator, authorString(c), ext)
 }
 
-func parseFilenameRegexp(name string, re *regexp.Regexp) (title string, author string) {
-    if re.MatchString(name) {
-        split := strings.Split(capture(name, re, "${title}|${author}"), "|")
-        title, author = split[0], split[1]
-    }
-    return
-}
-
-func scan(path string, recurse bool, excludes []string,
-    parseFilename func(string) (string, string),
-    sendRequest func(string, string) Classify,
-    processResponse func(string, Classify)) {
-    filepath.Walk(path,
-        func(_path string, fileInfo os.FileInfo, err error) error {
-            if err != nil {
-                log.Fatal(err)
-            }
-            if fileInfo.IsDir() {
-                if recurse {
-                    for _, exclude := range excludes {
-                        if exclude != "" && strings.Contains(_path, exclude) {
-                            return filepath.SkipDir
-                        }
-                    }
-                } else if filepath.Base(path) != fileInfo.Name() {
-                    return filepath.SkipDir
-                }
-            } else {
-                var classify Classify // "Unassigned"
-                if title, author := parseFilename(fileInfo.Name()); title != "" {
-                    classify = sendRequest(title, author)
-                }
-                processResponse(_path, classify)
-            }
-            return nil
-        })
-}
-
 const (
     COPY = 1
     LINK = 2
@@ -379,6 +341,44 @@ func linkFile(src string, dst string, mode int) (err error) {
     return
 }
 
+func parseFilenameRegexp(name string, re *regexp.Regexp) (title string, author string) {
+    if re.MatchString(name) {
+        split := strings.Split(capture(name, re, "${title}|${author}"), "|")
+        title, author = split[0], split[1]
+    }
+    return
+}
+
+func scan(path string, recurse bool, excludes []string,
+    parseFilename func(string) (string, string),
+    sendRequest func(string, string) Classify,
+    processResponse func(string, Classify)) {
+    filepath.Walk(path,
+        func(_path string, fileInfo os.FileInfo, err error) error {
+            if err != nil {
+                log.Fatal(err)
+            }
+            if fileInfo.IsDir() {
+                if recurse {
+                    for _, exclude := range excludes {
+                        if exclude != "" && strings.Contains(_path, exclude) {
+                            return filepath.SkipDir
+                        }
+                    }
+                } else if filepath.Base(path) != fileInfo.Name() {
+                    return filepath.SkipDir
+                }
+            } else {
+                var classify Classify // "Unassigned"
+                if title, author := parseFilename(fileInfo.Name()); title != "" {
+                    classify = sendRequest(title, author)
+                }
+                processResponse(_path, classify)
+            }
+            return nil
+        })
+}
+
 func main() {
     title := flag.String("t", "", "Search by title.")
     author := flag.String("a", "", "Search by author and title.")
@@ -396,7 +396,7 @@ func main() {
     flag.BoolVar(&verbose, "v", false, "Verbose. Log HTTP responses.")
     flag.Parse()
     if flag.NFlag() < 1 {
-        fmt.Println("Usage:\n\t$", os.Args[0], "[-t title [-a author]] [-i isbn] [-d path [-p pattern] [-r] [-e directories] [-c /path/to/library [-m 1|2|4|8]] [-misfile]] [-x /path/to/ddc.xml] [-depth 1..3] [-g] [-v]")
+        fmt.Println("Usage:\n\t$", os.Args[0], "[-t title [-a author]] [-i isbn] [-d path [-p pattern] [-r] [-e directories] [-c /path/to/library [-m 1|2|4|8|17|18|20|24]] [-misfile]] [-x /path/to/ddc.xml] [-depth 1..3] [-g] [-v]")
         return
     }
     ddc, err := parseDDC(*xml)
